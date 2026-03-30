@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
+import emailjs from '@emailjs/browser'  // 👈 ADD THIS LINE
 import { useEffect, useRef, useState } from 'react'
 import {
   FaGithub, FaLinkedin, FaEnvelope, FaAward, FaCode,
@@ -282,7 +283,67 @@ export default function Home() {
   const width = useWindowWidth()
   const isMobile = width < 768
   const isTablet = width >= 768 && width < 1024
+  const [formData, setFormData] = useState({
+    from_name: '',
+    from_email: '',
+    message: '',
+  })
+  const [sending, setSending] = useState(false)
+  const [status, setStatus] = useState({ message: '', type: '' })
 
+  // 👇 REPLACE THESE WITH YOUR ACTUAL CREDENTIALS
+  const EMAILJS_SERVICE_ID = 'service_qhpp6ob'      // ← PASTE YOUR SERVICE ID HERE
+  const EMAILJS_TEMPLATE_ID = 'template_t65l62b'    // ← PASTE YOUR TEMPLATE ID HERE
+  const EMAILJS_PUBLIC_KEY = '7jt1aw-a62UnrGp7B'        // ← PASTE YOUR PUBLIC KEY HERE
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSending(true)
+    setStatus({ message: '', type: '' })
+
+    try {
+      const templateParams = {
+        from_name: formData.from_name,
+        from_email: formData.from_email,
+        message: formData.message,
+        to_name: 'Saniya Kousar',
+      }
+
+      const response = await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        templateParams,
+        EMAILJS_PUBLIC_KEY
+      )
+
+      if (response.status === 200) {
+        setStatus({ 
+          message: '✨ Message sent successfully! I\'ll get back to you soon.', 
+          type: 'success' 
+        })
+        setFormData({ from_name: '', from_email: '', message: '' })
+      } else {
+        throw new Error('Failed to send')
+      }
+    } catch (error) {
+      console.error('EmailJS Error:', error)
+      setStatus({ 
+        message: '❌ Failed to send message. Please try again or email me directly.', 
+        type: 'error' 
+      })
+    } finally {
+      setSending(false)
+      setTimeout(() => setStatus({ message: '', type: '' }), 5000)
+    }
+  }
+  // ========== END EMAILJS CODE ==========
   const skills = [
     { cat: 'Languages', items: [
       { name: 'Java', icon: FaCode, color: '#f89820' },
@@ -366,6 +427,10 @@ export default function Home() {
         /* Responsive nav */
         .nav-links { display:flex;gap:32px; }
         @media(max-width:767px) { .nav-links { display:none!important; } }
+        @keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
       `}</style>
 
       <CursorGlow />
@@ -664,45 +729,115 @@ export default function Home() {
         </section>
 
         {/* ══ CONTACT ════════════════════════════════════════════════ */}
-        <section id="contact" style={{ padding: isMobile ? '72px 20px' : '112px 24px', position: 'relative', zIndex: 10 }}>
-          <div style={{ maxWidth: 720, margin: '0 auto' }}>
-            <Reveal><SectionTitle sub="Get In Touch">Let's Connect</SectionTitle></Reveal>
-            <Reveal delay={0.1}>
-              <div className="glass-card" style={{ ...glassGlow, padding: isMobile ? 28 : 48 }}>
-                <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                  <p style={{ color: '#9ca3af', fontSize: isMobile ? 14 : 15, lineHeight: 1.8, marginBottom: 16 }}>
-                    Open to internships, full-time roles, and interesting collaborations. Drop me a message and I'll get back within 24 hours.
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
-                    <a href="mailto:saniyakousar013@gmail.com" style={{ color: '#00d4ff', fontSize: 13, textDecoration: 'none' }}>saniyakousar013@gmail.com</a>
-                    <span style={{ color: '#1f2937' }}>·</span>
-                    <span style={{ color: '#4b5563', fontSize: 13 }}>+91 9059447996</span>
-                  </div>
-                </div>
-                <form action="https://formspree.io/f/xyzqpwer" method="POST">
-                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginBottom: 14 }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Name</label>
-                      <input type="text" name="name" required placeholder="Your name" />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Email</label>
-                      <input type="email" name="email" required placeholder="your@email.com" />
-                    </div>
-                  </div>
-                  <div style={{ marginBottom: 20 }}>
-                    <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Message</label>
-                    <textarea name="message" required rows={5} placeholder="What's on your mind?" style={{ resize: 'none' }} />
-                  </div>
-                  <motion.button type="submit" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    style={{ width: '100%', padding: '14px 0', borderRadius: 14, fontWeight: 600, fontSize: 14, color: '#fff', background: 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(6,182,212,0.15))', border: '1px solid rgba(0,212,255,0.4)', boxShadow: '0 0 30px rgba(0,212,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: "'DM Sans', sans-serif" }}>
-                    Send Message <FaArrowRight size={13} />
-                  </motion.button>
-                </form>
-              </div>
-            </Reveal>
+        {/* ══ CONTACT ════════════════════════════════════════════════ */}
+<section id="contact" style={{ padding: isMobile ? '72px 20px' : '112px 24px', position: 'relative', zIndex: 10 }}>
+  <div style={{ maxWidth: 720, margin: '0 auto' }}>
+    <Reveal><SectionTitle sub="Get In Touch">Let's Connect</SectionTitle></Reveal>
+    <Reveal delay={0.1}>
+      <div className="glass-card" style={{ ...glassGlow, padding: isMobile ? 28 : 48 }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <p style={{ color: '#9ca3af', fontSize: isMobile ? 14 : 15, lineHeight: 1.8, marginBottom: 16 }}>
+            Open to internships, full-time roles, and interesting collaborations. Drop me a message and I'll get back within 24 hours.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <a href="mailto:saniyakousar013@gmail.com" style={{ color: '#00d4ff', fontSize: 13, textDecoration: 'none' }}>saniyakousar013@gmail.com</a>
+            <span style={{ color: '#1f2937' }}>·</span>
+            <span style={{ color: '#4b5563', fontSize: 13 }}>+91 9059447996</span>
           </div>
-        </section>
+        </div>
+
+        {/* UPDATED FORM WITH EMAILJS */}
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginBottom: 14 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Name</label>
+              <input 
+                type="text" 
+                name="from_name" 
+                required 
+                placeholder="Your name"
+                value={formData.from_name}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Email</label>
+              <input 
+                type="email" 
+                name="from_email" 
+                required 
+                placeholder="your@email.com"
+                value={formData.from_email}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Message</label>
+            <textarea 
+              name="message" 
+              required 
+              rows={5} 
+              placeholder="What's on your mind?" 
+              style={{ resize: 'none' }}
+              value={formData.message}
+              onChange={handleChange}
+            />
+          </div>
+          
+          {/* Status Message */}
+          {status.message && (
+            <div style={{
+              marginBottom: 16,
+              padding: '12px',
+              borderRadius: 8,
+              background: status.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+              border: `1px solid ${status.type === 'success' ? '#22c55e' : '#ef4444'}`,
+              color: status.type === 'success' ? '#22c55e' : '#ef4444',
+              fontSize: 13,
+              textAlign: 'center'
+            }}>
+              {status.message}
+            </div>
+          )}
+          
+          <motion.button 
+            type="submit" 
+            disabled={sending}
+            whileHover={{ scale: sending ? 1 : 1.02 }} 
+            whileTap={{ scale: sending ? 1 : 0.98 }}
+            style={{
+              width: '100%', padding: '14px 0', borderRadius: 14,
+              fontWeight: 600, fontSize: 14, color: '#fff',
+              background: sending 
+                ? 'linear-gradient(135deg, rgba(100,100,100,0.3), rgba(80,80,80,0.2))'
+                : 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(6,182,212,0.15))',
+              border: '1px solid rgba(0,212,255,0.4)',
+              boxShadow: '0 0 30px rgba(0,212,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              fontFamily: "'DM Sans', sans-serif",
+              cursor: sending ? 'not-allowed' : 'pointer',
+              opacity: sending ? 0.7 : 1,
+            }}
+          >
+            {sending ? (
+              <>
+                <span className="spinner" style={{
+                  width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)',
+                  borderTop: '2px solid #00d4ff', borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite'
+                }} />
+                Sending...
+              </>
+            ) : (
+              <>Send Message <FaArrowRight size={13} /></>
+            )}
+          </motion.button>
+        </form>
+      </div>
+    </Reveal>
+  </div>
+</section>
 
         {/* ── FOOTER ─────────────────────────────────────────────── */}
         <footer style={{ padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(0,212,255,0.06)', position: 'relative', zIndex: 10 }}>
