@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import emailjs from '@emailjs/browser'  // 👈 ADD THIS LINE
+import emailjs from '@emailjs/browser'
 import { useEffect, useRef, useState } from 'react'
 import {
   FaGithub, FaLinkedin, FaEnvelope, FaAward, FaCode,
@@ -168,23 +168,12 @@ const useWindowWidth = () => {
   return width
 }
 
-/* ─── ProjectCard ────────────────────────────────────────────────── */
+/* ─── ProjectCard (No Add Image Button) ──────────────────────────── */
+/* ─── ProjectCard (With Hover Images) ──────────────────────────── */
 const ProjectCard = ({ p, i }) => {
   const [isHovered, setIsHovered] = useState(false)
-  const [uploadedImage, setUploadedImage] = useState(null)
-  const fileInputRef = useRef(null)
   const width = useWindowWidth()
   const isMobile = width < 768
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => setUploadedImage(ev.target.result)
-    reader.readAsDataURL(file)
-  }
-
-  const displayImage = uploadedImage || p.image
 
   return (
     <Reveal delay={i * 0.15}>
@@ -199,29 +188,75 @@ const ProjectCard = ({ p, i }) => {
           backdropFilter: 'blur(24px)',
           position: 'relative',
           transition: 'all 0.35s ease',
-          minHeight: isHovered && displayImage ? 480 : 'auto',
+          minHeight: isHovered && !isMobile ? 480 : 'auto',
         }}
       >
         <div style={{ height: 2, background: `linear-gradient(90deg, transparent, ${p.accent}, transparent)`, opacity: 0.6 }} />
 
-        {/* Image always visible on mobile */}
-        {displayImage && isMobile && (
-          <div style={{ width: '100%', height: 200, overflow: 'hidden' }}>
-            <img src={displayImage} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
+        {/* Image visible on mobile */}
+        {p.image && isMobile && (
+          <div style={{ width: '100%', height: 220, overflow: 'hidden' }}>
+            <img 
+              src={p.image} 
+              alt={p.title} 
+              loading="lazy"
+              style={{ 
+                width: '100%', height: '100%', objectFit: 'cover', 
+                objectPosition: 'center top', display: 'block' 
+              }} 
+            />
           </div>
         )}
 
-        {/* Hover overlay desktop */}
+        {/* Hover overlay - shows image on desktop hover */}
         <AnimatePresence>
-          {isHovered && displayImage && !isMobile && (
+          {isHovered && p.image && !isMobile && (
             <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20, borderRadius: 20, overflow: 'hidden' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              style={{ 
+                position: 'absolute', 
+                top: 0, 
+                left: 0, 
+                right: 0, 
+                bottom: 0, 
+                zIndex: 20, 
+                borderRadius: 20, 
+                overflow: 'hidden' 
+              }}
             >
-              <img src={displayImage} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,11,24,0.3)', display: 'flex', alignItems: 'flex-end', padding: '20px 24px' }}>
-                <span style={{ color: p.accent, fontSize: 12, fontFamily: "'DM Sans', sans-serif", background: 'rgba(2,11,24,0.7)', padding: '4px 12px', borderRadius: 999, border: `1px solid ${p.accent}40` }}>
-                  Preview — move away to close
+              <img 
+                src={p.image} 
+                alt={p.title} 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover', 
+                  objectPosition: 'center top', 
+                  display: 'block' 
+                }} 
+              />
+              <div style={{ 
+                position: 'absolute', 
+                inset: 0, 
+                background: 'linear-gradient(to top, rgba(2,11,24,0.7), transparent)',
+                display: 'flex', 
+                alignItems: 'flex-end', 
+                padding: '24px 28px' 
+              }}>
+                <span style={{ 
+                  color: p.accent, 
+                  fontSize: 13, 
+                  fontFamily: "'DM Sans', sans-serif", 
+                  background: 'rgba(2,11,24,0.7)', 
+                  padding: '6px 14px', 
+                  borderRadius: 999, 
+                  border: `1px solid ${p.accent}50`,
+                  backdropFilter: 'blur(4px)'
+                }}>
+                  🔍 {p.title} Preview
                 </span>
               </div>
             </motion.div>
@@ -235,40 +270,60 @@ const ProjectCard = ({ p, i }) => {
           gridTemplateColumns: isMobile ? '1fr' : '1fr auto',
           gap: isMobile ? 20 : 32,
           alignItems: 'flex-start',
+          position: 'relative',
+          zIndex: 10,
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 16 }}>
-              <span className="proj-num" style={{ fontFamily: "'Syne', sans-serif", fontWeight: 900, fontSize: isMobile ? 36 : 48, color: 'rgba(255,255,255,0.07)', lineHeight: 1, transition: 'all 0.3s', flexShrink: 0 }}>{p.num}</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
+              <span className="proj-num" style={{ 
+                fontFamily: "'Syne', sans-serif", 
+                fontWeight: 900, 
+                fontSize: isMobile ? 36 : 48, 
+                color: isHovered && !isMobile ? p.accent : 'rgba(255,255,255,0.07)',
+                lineHeight: 1, 
+                transition: 'all 0.3s', 
+                flexShrink: 0,
+                textShadow: isHovered && !isMobile ? `0 0 20px ${p.accent}` : 'none'
+              }}>{p.num}</span>
               <div>
                 <p style={{ fontSize: 10, letterSpacing: '0.2em', color: '#4b5563', textTransform: 'uppercase', marginBottom: 4 }}>{p.tag}</p>
                 <h3 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 900, fontSize: isMobile ? 22 : 28, color: '#fff', letterSpacing: '-0.02em' }}>{p.title}</h3>
               </div>
             </div>
-            <p style={{ color: '#9ca3af', fontSize: isMobile ? 14 : 15, lineHeight: 1.8, marginBottom: 20 }}>{p.desc}</p>
+            <p style={{ color: '#9ca3af', fontSize: isMobile ? 14 : 15, lineHeight: 1.7, marginBottom: 20 }}>{p.desc}</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
               {p.features.map((f, fi) => (
-                <span key={fi} style={{ padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500, background: `${p.accent}14`, border: `1px solid ${p.accent}35`, color: p.accent }}>{f}</span>
+                <span key={fi} style={{ 
+                  padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500, 
+                  background: `${p.accent}14`, border: `1px solid ${p.accent}35`, color: p.accent 
+                }}>{f}</span>
               ))}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {p.tech.map((t, ti) => (
-                <span key={ti} style={{ padding: '4px 12px', borderRadius: 999, fontSize: 12, color: '#4b5563', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>{t}</span>
+                <span key={ti} style={{ 
+                  padding: '4px 12px', borderRadius: 999, fontSize: 12, color: '#4b5563', 
+                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' 
+                }}>{t}</span>
               ))}
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: 12, alignItems: 'center', justifyContent: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
             <a href={p.github} target="_blank" rel="noopener noreferrer" className="glow-btn"
               style={{ padding: '10px 20px', borderRadius: 14, fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
               <FaGithub size={14} /> GitHub
             </a>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
-            <button onClick={() => fileInputRef.current.click()}
-              style={{ padding: '10px 16px', borderRadius: 12, fontSize: 12, fontWeight: 600, background: uploadedImage ? `${p.accent}20` : 'rgba(255,255,255,0.05)', border: `1px solid ${uploadedImage ? p.accent + '60' : 'rgba(255,255,255,0.1)'}`, color: uploadedImage ? p.accent : '#6b7280', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", transition: 'all 0.2s' }}>
-              {uploadedImage ? '✓ Image set' : '+ Add image'}
-            </button>
             {!isMobile && (
-              <div style={{ width: 52, height: 52, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, background: `${p.accent}12`, border: `1px solid ${p.accent}25` }}>{p.emoji}</div>
+              <div style={{ 
+                width: 52, height: 52, borderRadius: 16, display: 'flex', alignItems: 'center', 
+                justifyContent: 'center', fontSize: 26, background: `${p.accent}12`, 
+                border: `1px solid ${p.accent}25`,
+                transition: 'all 0.3s',
+                transform: isHovered ? 'scale(1.05)' : 'scale(1)'
+              }}>
+                {p.emoji}
+              </div>
             )}
           </div>
         </div>
@@ -291,10 +346,10 @@ export default function Home() {
   const [sending, setSending] = useState(false)
   const [status, setStatus] = useState({ message: '', type: '' })
 
-  // 👇 REPLACE THESE WITH YOUR ACTUAL CREDENTIALS
-  const EMAILJS_SERVICE_ID = 'service_qhpp6ob'      // ← PASTE YOUR SERVICE ID HERE
-  const EMAILJS_TEMPLATE_ID = 'template_t65l62b'    // ← PASTE YOUR TEMPLATE ID HERE
-  const EMAILJS_PUBLIC_KEY = '7jt1aw-a62UnrGp7B'        // ← PASTE YOUR PUBLIC KEY HERE
+  // EmailJS credentials
+  const EMAILJS_SERVICE_ID = 'service_qhpp6ob'
+  const EMAILJS_TEMPLATE_ID = 'template_t65l62b'
+  const EMAILJS_PUBLIC_KEY = '7jt1aw-a62UnrGp7B'
 
   const handleChange = (e) => {
     setFormData({
@@ -343,7 +398,7 @@ export default function Home() {
       setTimeout(() => setStatus({ message: '', type: '' }), 5000)
     }
   }
-  // ========== END EMAILJS CODE ==========
+
   const skills = [
     { cat: 'Languages', items: [
       { name: 'Java', icon: FaCode, color: '#f89820' },
@@ -416,7 +471,6 @@ export default function Home() {
         .proj-card:hover .proj-num { color:#00d4ff;text-shadow:0 0 20px rgba(0,212,255,0.6); }
         .glass-card { transition:border-color 0.3s,box-shadow 0.3s; }
         .glass-card:hover { border-color:rgba(0,212,255,0.3)!important;box-shadow:0 0 30px rgba(0,212,255,0.08)!important; }
-        input[type="file"] { display:none!important; }
         input:not([type="file"]), textarea { background:rgba(255,255,255,0.04)!important;border:1px solid rgba(255,255,255,0.08)!important;border-radius:12px;color:#fff;padding:12px 16px;width:100%;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;transition:box-shadow 0.2s,border-color 0.2s; }
         input::placeholder, textarea::placeholder { color:rgba(255,255,255,0.2); }
         input:focus, textarea:focus { border-color:rgba(0,212,255,0.5)!important;box-shadow:0 0 0 3px rgba(0,212,255,0.12); }
@@ -428,9 +482,9 @@ export default function Home() {
         .nav-links { display:flex;gap:32px; }
         @media(max-width:767px) { .nav-links { display:none!important; } }
         @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
       `}</style>
 
       <CursorGlow />
@@ -729,115 +783,112 @@ export default function Home() {
         </section>
 
         {/* ══ CONTACT ════════════════════════════════════════════════ */}
-        {/* ══ CONTACT ════════════════════════════════════════════════ */}
-<section id="contact" style={{ padding: isMobile ? '72px 20px' : '112px 24px', position: 'relative', zIndex: 10 }}>
-  <div style={{ maxWidth: 720, margin: '0 auto' }}>
-    <Reveal><SectionTitle sub="Get In Touch">Let's Connect</SectionTitle></Reveal>
-    <Reveal delay={0.1}>
-      <div className="glass-card" style={{ ...glassGlow, padding: isMobile ? 28 : 48 }}>
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <p style={{ color: '#9ca3af', fontSize: isMobile ? 14 : 15, lineHeight: 1.8, marginBottom: 16 }}>
-            Open to internships, full-time roles, and interesting collaborations. Drop me a message and I'll get back within 24 hours.
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <a href="mailto:saniyakousar013@gmail.com" style={{ color: '#00d4ff', fontSize: 13, textDecoration: 'none' }}>saniyakousar013@gmail.com</a>
-            <span style={{ color: '#1f2937' }}>·</span>
-            <span style={{ color: '#4b5563', fontSize: 13 }}>+91 9059447996</span>
-          </div>
-        </div>
+        <section id="contact" style={{ padding: isMobile ? '72px 20px' : '112px 24px', position: 'relative', zIndex: 10 }}>
+          <div style={{ maxWidth: 720, margin: '0 auto' }}>
+            <Reveal><SectionTitle sub="Get In Touch">Let's Connect</SectionTitle></Reveal>
+            <Reveal delay={0.1}>
+              <div className="glass-card" style={{ ...glassGlow, padding: isMobile ? 28 : 48 }}>
+                <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                  <p style={{ color: '#9ca3af', fontSize: isMobile ? 14 : 15, lineHeight: 1.8, marginBottom: 16 }}>
+                    Open to internships, full-time roles, and interesting collaborations. Drop me a message and I'll get back within 24 hours.
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <a href="mailto:saniyakousar013@gmail.com" style={{ color: '#00d4ff', fontSize: 13, textDecoration: 'none' }}>saniyakousar013@gmail.com</a>
+                    <span style={{ color: '#1f2937' }}>·</span>
+                    <span style={{ color: '#4b5563', fontSize: 13 }}>+91 9059447996</span>
+                  </div>
+                </div>
 
-        {/* UPDATED FORM WITH EMAILJS */}
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginBottom: 14 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Name</label>
-              <input 
-                type="text" 
-                name="from_name" 
-                required 
-                placeholder="Your name"
-                value={formData.from_name}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Email</label>
-              <input 
-                type="email" 
-                name="from_email" 
-                required 
-                placeholder="your@email.com"
-                value={formData.from_email}
-                onChange={handleChange}
-              />
-            </div>
+                <form onSubmit={handleSubmit}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Name</label>
+                      <input 
+                        type="text" 
+                        name="from_name" 
+                        required 
+                        placeholder="Your name"
+                        value={formData.from_name}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Email</label>
+                      <input 
+                        type="email" 
+                        name="from_email" 
+                        required 
+                        placeholder="your@email.com"
+                        value={formData.from_email}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Message</label>
+                    <textarea 
+                      name="message" 
+                      required 
+                      rows={5} 
+                      placeholder="What's on your mind?" 
+                      style={{ resize: 'none' }}
+                      value={formData.message}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  
+                  {status.message && (
+                    <div style={{
+                      marginBottom: 16,
+                      padding: '12px',
+                      borderRadius: 8,
+                      background: status.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                      border: `1px solid ${status.type === 'success' ? '#22c55e' : '#ef4444'}`,
+                      color: status.type === 'success' ? '#22c55e' : '#ef4444',
+                      fontSize: 13,
+                      textAlign: 'center'
+                    }}>
+                      {status.message}
+                    </div>
+                  )}
+                  
+                  <motion.button 
+                    type="submit" 
+                    disabled={sending}
+                    whileHover={{ scale: sending ? 1 : 1.02 }} 
+                    whileTap={{ scale: sending ? 1 : 0.98 }}
+                    style={{
+                      width: '100%', padding: '14px 0', borderRadius: 14,
+                      fontWeight: 600, fontSize: 14, color: '#fff',
+                      background: sending 
+                        ? 'linear-gradient(135deg, rgba(100,100,100,0.3), rgba(80,80,80,0.2))'
+                        : 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(6,182,212,0.15))',
+                      border: '1px solid rgba(0,212,255,0.4)',
+                      boxShadow: '0 0 30px rgba(0,212,255,0.15)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      fontFamily: "'DM Sans', sans-serif",
+                      cursor: sending ? 'not-allowed' : 'pointer',
+                      opacity: sending ? 0.7 : 1,
+                    }}
+                  >
+                    {sending ? (
+                      <>
+                        <span className="spinner" style={{
+                          width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)',
+                          borderTop: '2px solid #00d4ff', borderRadius: '50%',
+                          animation: 'spin 0.8s linear infinite'
+                        }} />
+                        Sending...
+                      </>
+                    ) : (
+                      <>Send Message <FaArrowRight size={13} /></>
+                    )}
+                  </motion.button>
+                </form>
+              </div>
+            </Reveal>
           </div>
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', fontSize: 10, color: '#374151', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 8 }}>Message</label>
-            <textarea 
-              name="message" 
-              required 
-              rows={5} 
-              placeholder="What's on your mind?" 
-              style={{ resize: 'none' }}
-              value={formData.message}
-              onChange={handleChange}
-            />
-          </div>
-          
-          {/* Status Message */}
-          {status.message && (
-            <div style={{
-              marginBottom: 16,
-              padding: '12px',
-              borderRadius: 8,
-              background: status.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-              border: `1px solid ${status.type === 'success' ? '#22c55e' : '#ef4444'}`,
-              color: status.type === 'success' ? '#22c55e' : '#ef4444',
-              fontSize: 13,
-              textAlign: 'center'
-            }}>
-              {status.message}
-            </div>
-          )}
-          
-          <motion.button 
-            type="submit" 
-            disabled={sending}
-            whileHover={{ scale: sending ? 1 : 1.02 }} 
-            whileTap={{ scale: sending ? 1 : 0.98 }}
-            style={{
-              width: '100%', padding: '14px 0', borderRadius: 14,
-              fontWeight: 600, fontSize: 14, color: '#fff',
-              background: sending 
-                ? 'linear-gradient(135deg, rgba(100,100,100,0.3), rgba(80,80,80,0.2))'
-                : 'linear-gradient(135deg, rgba(0,212,255,0.2), rgba(6,182,212,0.15))',
-              border: '1px solid rgba(0,212,255,0.4)',
-              boxShadow: '0 0 30px rgba(0,212,255,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              fontFamily: "'DM Sans', sans-serif",
-              cursor: sending ? 'not-allowed' : 'pointer',
-              opacity: sending ? 0.7 : 1,
-            }}
-          >
-            {sending ? (
-              <>
-                <span className="spinner" style={{
-                  width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)',
-                  borderTop: '2px solid #00d4ff', borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite'
-                }} />
-                Sending...
-              </>
-            ) : (
-              <>Send Message <FaArrowRight size={13} /></>
-            )}
-          </motion.button>
-        </form>
-      </div>
-    </Reveal>
-  </div>
-</section>
+        </section>
 
         {/* ── FOOTER ─────────────────────────────────────────────── */}
         <footer style={{ padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(0,212,255,0.06)', position: 'relative', zIndex: 10 }}>
