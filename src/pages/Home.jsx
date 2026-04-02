@@ -10,209 +10,170 @@ import {
 } from 'react-icons/fa'
 import {
   SiReact, SiJavascript, SiPython, SiSpringboot, SiTailwindcss,
-  SiMysql, SiGit, SiHtml5, SiSpring, SiCplusplus, SiC, SiHibernate, SiPostman
+  SiMysql, SiGit, SiHtml5, SiSpring, SiCplusplus, SiC, SiHibernate, SiPostman,SiFirebase
 } from 'react-icons/si'
 
-/* ─── Particle Background (New) ─────────────────────────────────── */
+/* ─── PARTICLE BACKGROUND (WORKING VERSION) ─────────────────────── */
 const ParticleBackground = () => {
   const canvasRef = useRef(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    let raf, W, H
-    const particles = []
-    const ripples = []
-    const trails = []
-    let lastTrail = 0
-    let mouse = { x: -999, y: -999 }
+    let width, height
+    let particles = []
+    let mouseX = -100, mouseY = -100
+    let animationId
 
-    const ORBS = [
-      { x: 0.2, y: 0.3, r: 220, hue: 195, phase: 0 },
-      { x: 0.75, y: 0.6, r: 260, hue: 210, phase: 1.2 },
-      { x: 0.5, y: 0.9, r: 180, hue: 180, phase: 2.4 },
-    ]
-
-    const resize = () => {
-      W = canvas.width = window.innerWidth
-      H = canvas.height = window.innerHeight
-      initParticles()
-    }
-
+    // Create particles
     const initParticles = () => {
-      particles.length = 0
-      const count = Math.min(120, Math.floor(W * H / 8000))
+      particles = []
+      const count = Math.min(100, Math.floor((window.innerWidth * window.innerHeight) / 10000))
+      
       for (let i = 0; i < count; i++) {
         particles.push({
-          x: Math.random() * W, y: Math.random() * H,
-          vx: (Math.random() - 0.5) * 0.35,
-          vy: (Math.random() - 0.5) * 0.35,
-          r: Math.random() * 1.8 + 0.6,
-          alpha: Math.random() * 0.4 + 0.15,
-          hue: 180 + Math.random() * 40,
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
+          radius: Math.random() * 2 + 1,
+          color: `rgba(0, ${Math.random() * 100 + 155}, 255, ${Math.random() * 0.4 + 0.2})`,
         })
       }
     }
 
-    const drawGrid = () => {
-      const step = 60
-      ctx.strokeStyle = 'rgba(0,212,255,0.04)'
-      ctx.lineWidth = 0.5
-      for (let x = 0; x < W; x += step) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke()
-      }
-      for (let y = 0; y < H; y += step) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke()
-      }
+    // Resize handler
+    const resize = () => {
+      width = window.innerWidth
+      height = window.innerHeight
+      canvas.width = width
+      canvas.height = height
+      initParticles()
     }
 
-    const drawOrbs = (t) => {
-      for (const o of ORBS) {
-        const px = o.x * W + Math.sin(t * 0.0004 + o.phase) * 50
-        const py = o.y * H + Math.cos(t * 0.0003 + o.phase * 1.3) * 35
-        const g = ctx.createRadialGradient(px, py, 0, px, py, o.r)
-        g.addColorStop(0, `hsla(${o.hue},90%,60%,0.09)`)
-        g.addColorStop(0.5, `hsla(${o.hue},80%,50%,0.04)`)
-        g.addColorStop(1, `hsla(${o.hue},70%,40%,0)`)
-        ctx.fillStyle = g
-        ctx.beginPath(); ctx.arc(px, py, o.r, 0, Math.PI * 2); ctx.fill()
-      }
+    // Mouse handlers
+    const onMouseMove = (e) => {
+      mouseX = e.clientX
+      mouseY = e.clientY
     }
 
-    const drawParticles = () => {
-      for (const p of particles) {
-        p.x += p.vx; p.y += p.vy
-        if (p.x < 0 || p.x > W) p.vx *= -1
-        if (p.y < 0 || p.y > H) p.vy *= -1
-        p.x = Math.max(0, Math.min(W, p.x))
-        p.y = Math.max(0, Math.min(H, p.y))
-
-        // repel from cursor
-        const dx = p.x - mouse.x, dy = p.y - mouse.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < 100 && dist > 0) {
-          const f = (100 - dist) / 100 * 0.8
-          p.x += (dx / dist) * f; p.y += (dy / dist) * f
-        }
-
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fillStyle = `hsla(${p.hue},80%,70%,${p.alpha})`
-        ctx.fill()
-      }
+    const onMouseLeave = () => {
+      mouseX = -100
+      mouseY = -100
     }
 
-    const drawConnections = () => {
+    // Draw everything
+    const draw = () => {
+      // Clear with dark background
+      ctx.fillStyle = '#020b18'
+      ctx.fillRect(0, 0, width, height)
+      
+      // Draw particles and connections
       for (let i = 0; i < particles.length; i++) {
+        const p = particles[i]
+        
+        // Update position
+        p.x += p.vx
+        p.y += p.vy
+        
+        // Bounce off edges
+        if (p.x < 0 || p.x > width) p.vx *= -1
+        if (p.y < 0 || p.y > height) p.vy *= -1
+        
+        // Keep in bounds
+        p.x = Math.max(0, Math.min(width, p.x))
+        p.y = Math.max(0, Math.min(height, p.y))
+        
+        // Draw particle
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
+        ctx.fillStyle = p.color
+        ctx.fill()
+        
+        // Draw connections between particles
         for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x
-          const dy = particles[i].y - particles[j].y
-          const d = Math.sqrt(dx * dx + dy * dy)
-          if (d < 90) {
-            ctx.strokeStyle = `rgba(0,212,255,${(1 - d / 90) * 0.12})`
-            ctx.lineWidth = 0.5
+          const p2 = particles[j]
+          const dx = p.x - p2.x
+          const dy = p.y - p2.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          
+          if (dist < 100) {
             ctx.beginPath()
-            ctx.moveTo(particles[i].x, particles[i].y)
-            ctx.lineTo(particles[j].x, particles[j].y)
+            ctx.moveTo(p.x, p.y)
+            ctx.lineTo(p2.x, p2.y)
+            ctx.strokeStyle = `rgba(0, 200, 255, ${0.15 * (1 - dist / 100)})`
+            ctx.lineWidth = 0.8
             ctx.stroke()
           }
         }
-        const dx = particles[i].x - mouse.x
-        const dy = particles[i].y - mouse.y
-        const d = Math.sqrt(dx * dx + dy * dy)
-        if (d < 140) {
-          ctx.strokeStyle = `rgba(0,212,255,${(1 - d / 140) * 0.35})`
-          ctx.lineWidth = 1
-          ctx.beginPath()
-          ctx.moveTo(particles[i].x, particles[i].y)
-          ctx.lineTo(mouse.x, mouse.y)
-          ctx.stroke()
+        
+        // Draw connection to mouse
+        if (mouseX > 0 && mouseY > 0) {
+          const dx = p.x - mouseX
+          const dy = p.y - mouseY
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          
+          if (dist < 120) {
+            ctx.beginPath()
+            ctx.moveTo(p.x, p.y)
+            ctx.lineTo(mouseX, mouseY)
+            ctx.strokeStyle = `rgba(0, 200, 255, ${0.25 * (1 - dist / 120)})`
+            ctx.lineWidth = 1
+            ctx.stroke()
+          }
         }
       }
-    }
-
-    const drawTrails = () => {
-      for (let i = trails.length - 1; i >= 0; i--) {
-        const tr = trails[i]
-        tr.life -= 0.025
-        if (tr.life <= 0) { trails.splice(i, 1); continue }
+      
+      // Draw mouse glow
+      if (mouseX > 0 && mouseY > 0) {
+        // Outer glow
+        const grad = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 60)
+        grad.addColorStop(0, 'rgba(0, 200, 255, 0.1)')
+        grad.addColorStop(1, 'rgba(0, 200, 255, 0)')
+        ctx.fillStyle = grad
         ctx.beginPath()
-        ctx.arc(tr.x, tr.y, tr.r * tr.life, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(0,212,255,${tr.life * 0.18})`
+        ctx.arc(mouseX, mouseY, 60, 0, Math.PI * 2)
+        ctx.fill()
+        
+        // Inner dot
+        ctx.beginPath()
+        ctx.arc(mouseX, mouseY, 3, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(0, 212, 255, 0.8)'
         ctx.fill()
       }
+      
+      animationId = requestAnimationFrame(draw)
     }
 
-    const drawRipples = () => {
-      for (let i = ripples.length - 1; i >= 0; i--) {
-        const rp = ripples[i]
-        rp.r += 2.5; rp.alpha -= 0.018
-        if (rp.alpha <= 0) { ripples.splice(i, 1); continue }
-        ctx.beginPath(); ctx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2)
-        ctx.strokeStyle = `rgba(0,212,255,${rp.alpha})`
-        ctx.lineWidth = 1; ctx.stroke()
-      }
-    }
-
-    const drawMouseGlow = () => {
-      if (mouse.x < 0) return
-      const g = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 90)
-      g.addColorStop(0, 'rgba(0,212,255,0.10)')
-      g.addColorStop(1, 'rgba(0,212,255,0)')
-      ctx.fillStyle = g
-      ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 90, 0, Math.PI * 2); ctx.fill()
-
-      ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 3, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(0,212,255,0.85)'; ctx.fill()
-
-      ctx.strokeStyle = 'rgba(0,212,255,0.3)'
-      ctx.lineWidth = 0.7; ctx.setLineDash([4, 4])
-      ctx.beginPath(); ctx.moveTo(mouse.x - 20, mouse.y); ctx.lineTo(mouse.x + 20, mouse.y); ctx.stroke()
-      ctx.beginPath(); ctx.moveTo(mouse.x, mouse.y - 20); ctx.lineTo(mouse.x, mouse.y + 20); ctx.stroke()
-      ctx.setLineDash([])
-    }
-
-    const frame = (t) => {
-      ctx.clearRect(0, 0, W, H)
-      if (t - lastTrail > 30 && mouse.x > 0) {
-        trails.push({ x: mouse.x, y: mouse.y, r: 6, life: 1 })
-        lastTrail = t
-      }
-      drawGrid(); drawOrbs(t); drawTrails()
-      drawParticles(); drawConnections(); drawRipples(); drawMouseGlow()
-      raf = requestAnimationFrame(frame)
-    }
-
-    const onMove = (e) => { mouse.x = e.clientX; mouse.y = e.clientY }
-    const onLeave = () => { mouse.x = -999; mouse.y = -999 }
-    const onClick = (e) => {
-      ripples.push({ x: e.clientX, y: e.clientY, r: 4, alpha: 0.7 })
-      ripples.push({ x: e.clientX, y: e.clientY, r: 4, alpha: 0.4 })
-    }
-
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseleave', onLeave)
-    window.addEventListener('click', onClick)
+    // Setup
     window.addEventListener('resize', resize)
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseleave', onMouseLeave)
+    
     resize()
-    requestAnimationFrame(frame)
+    draw()
 
     return () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseleave', onLeave)
-      window.removeEventListener('click', onClick)
       window.removeEventListener('resize', resize)
-      cancelAnimationFrame(raf)
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseleave', onMouseLeave)
+      if (animationId) cancelAnimationFrame(animationId)
     }
   }, [])
 
   return (
-    <canvas ref={canvasRef} style={{
-      position: 'fixed', top: 0, left: 0,
-      width: '100%', height: '100%',
-      pointerEvents: 'none', zIndex: 0,
-      background: '#020b18',
-    }} />
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }}
+    />
   )
 }
 
@@ -266,7 +227,7 @@ Available commands:
 🎓 Computer Science Engineering Student
 📍 Telangana, India
 💻 Full Stack Developer | AI Enthusiast
-🏆 9.96 CGA (Diploma) | 9.63 CGA (B.E.)
+🏆 9.96 CGA (Diploma) | 9.47 CGA (B.E.)
 
 Passionate about building scalable applications
 that solve real-world problems. Experienced in
@@ -288,7 +249,7 @@ Java, Spring Boot, React, and AI technologies.
    • Tailwind CSS, Bootstrap
 
 🗄️ Databases & Tools:
-   • MySQL, Git, Postman, VS Code
+   • MySQL, Git, Postman, Firebase, VS Code
 
 📊 Key Strengths:
    • Data Structures & Algorithms
@@ -328,7 +289,7 @@ Java, Spring Boot, React, and AI technologies.
    • Agile methodology
 
 🎓 Education
-   • B.E. Computer Science (9.63 CGA)
+   • B.E. Computer Science (9.47 CGA)
      UCET, Osmania University | 2024-Present
    • Diploma in CSE (9.96 CGA)
      Govt Polytechnic Warangal | 2021-2024
@@ -955,6 +916,7 @@ export default function Home() {
       { name: 'MySQL', icon: SiMysql, color: '#4479A1' },
       { name: 'Git / GitHub', icon: SiGit, color: '#F05032' },
       { name: 'Postman', icon: SiPostman, color: '#FF6C37' },
+      { name: 'Firebase', icon: SiFirebase, color: '#FFCA28' },
     ]},
   ]
 
@@ -981,7 +943,7 @@ export default function Home() {
 
   const stats = [
     { value: '9.96', label: 'Diploma CGA', icon: '🏆' },
-    { value: '9.63', label: 'Current CGA', icon: '🎓' },
+    { value: '9.47', label: 'Current CGA', icon: '🎓' },
     { value: '300+', label: 'Students Reached', icon: '👥' },
   ]
 
@@ -1025,7 +987,9 @@ export default function Home() {
 <CursorGlow />
 <ParticleBackground />
 
-     <div style={{ fontFamily: "'DM Sans', sans-serif", background: '#020b18', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+     // Change this line in your return:
+<div style={{ fontFamily: "'DM Sans', sans-serif", background: '#020b18', minHeight: '100vh', position: 'relative', zIndex: 2 }}>
+//                                                                                                                      ^^^ was 1, now 2
         {/* All your content goes here */}
       
         {/* ══ NAV ════════════════════════════════════════════════════ */}
@@ -1450,7 +1414,7 @@ export default function Home() {
 
         {/* ── FOOTER ─────────────────────────────────────────────── */}
         <footer style={{ padding: '28px 24px', textAlign: 'center', borderTop: '1px solid rgba(0,212,255,0.06)', position: 'relative', zIndex: 10 }}>
-          <p style={{ color: '#1f2937', fontSize: 12 }}>Built with ❤️ by <span style={{ color: '#0e7490' }}>Saniya Kousar</span> · 2025</p>
+          <p style={{ color: '#1f2937', fontSize: 12 }}>Built with ❤️ by <span style={{ color: '#0e7490' }}>Saniya Kousar</span> · 2026</p>
         </footer>
 
       </div>
