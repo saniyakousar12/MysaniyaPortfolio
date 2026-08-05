@@ -274,6 +274,12 @@ Java, Spring Boot, React, and AI technologies.
    • Similarity percentage calculation
    • Tech: Python, Django, Image Processing
 
+   ⚡ Quick Serve [03]
+   • AI-powered service booking platform
+   • AI recommendations & fraud detection
+   • Intelligent chatbot for support
+   • Tech: React, Spring Boot, Spring AI
+
 👉 Type 'github' to view projects on GitHub
       `
     }),
@@ -931,7 +937,19 @@ export default function Home() {
       image: '/projects/bookswap.png',
     },
     {
-      num: '02', title: 'Plagiarism Detector', tag: 'Python · Image Processing',
+    num: '02',
+    title: 'Quick Serve',
+    tag: 'Full Stack · AI-Powered',
+    desc: 'Scalable full-stack service booking platform featuring role-based authentication, secure booking, real-time availability, and an admin dashboard. Includes AI-driven service recommendations, fraud detection for suspicious listings, and an intelligent chatbot for real-time customer support.',
+    tech: ['React', 'Spring Boot', 'Spring AI', 'MySQL', 'REST APIs'],
+    features: ['AI Recommendations', 'Fraud Detection', 'Intelligent Chatbot', 'Real-time Availability', 'Admin Dashboard'],
+    github: 'https://github.com/saniyakousar12/serviceApp.git',
+    accent: '#34d399',
+    emoji: '⚡',
+    image: '/projects/home-page.png',
+  },
+    {
+      num: '03', title: 'Plagiarism Detector', tag: 'Python · Image Processing',
       desc: 'Detects text & image plagiarism — computes word-overlap similarity percentages and uses hologram matching to identify duplicated visual content with threshold highlighting.',
       tech: ['Python', 'Django', 'MySQL', 'Image Processing'],
       features: ['Text Similarity', 'Hologram Matching', 'Visual Highlighting'],
@@ -939,6 +957,7 @@ export default function Home() {
       accent: '#818cf8', emoji: '🔍',
       image: '/projects/text.jpg',
     },
+  
   ]
 
   const stats = [
